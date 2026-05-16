@@ -50,7 +50,11 @@ scaler       = pickle.load(open("scaler.pkl",   "rb"))
 metadata     = json.load(open("model_metadata.json"))
 
 # Model behavior keuangan (dari tim DS)
-behavior_model = pickle.load(open("financial_type_classifier.pkl", "rb"))
+try:
+    behavior_model = pickle.load(open("financial_type_classifier.pkl", "rb"))
+except Exception as e:
+    print(f"Warning: behavior_model gagal diload: {e}")
+    behavior_model = None
 
 # FinBot — Hugging Face
 finbot_clf = None
@@ -369,6 +373,9 @@ def classify_behavior(data: BehaviorInput):
 
     # Susun fitur sesuai urutan training model DS
     # ['Income', 'Needs', 'Wants', 'Savings', 'Total_Spending', 'Financial_Balance']
+    if behavior_model is None:
+        raise HTTPException(503, "Model behavior tidak tersedia saat ini.")
+
     X = np.array([[
         data.Income,
         data.Needs,
