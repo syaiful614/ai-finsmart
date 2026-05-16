@@ -17,7 +17,11 @@ import joblib
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import pipeline as hf_pipeline
+try:
+    from transformers import pipeline as hf_pipeline
+    FINBOT_AVAILABLE = True
+except ImportError:
+    FINBOT_AVAILABLE = False
 
 # ──────────────────────────────────────────────
 # APP INIT
@@ -49,10 +53,15 @@ metadata     = json.load(open("model_metadata.json"))
 behavior_model = pickle.load(open("financial_type_classifier.pkl", "rb"))
 
 # FinBot — Hugging Face
-finbot_clf = hf_pipeline(
-    "zero-shot-classification",
-    model="facebook/bart-large-mnli"
-)
+finbot_clf = None
+if FINBOT_AVAILABLE:
+    try:
+        finbot_clf = hf_pipeline(
+            "zero-shot-classification",
+            model="facebook/bart-large-mnli"
+        )
+    except Exception:
+        finbot_clf = None
 
 # ──────────────────────────────────────────────
 # KONSTANTA FITUR — DATASET BARU (7 fitur)
@@ -488,6 +497,12 @@ def finbot_chat(body: ChatInput):
     if not body.pertanyaan.strip():
         raise HTTPException(422, "Pertanyaan tidak boleh kosong.")
 
+    if finbot_clf is None:
+        return {
+            "intent"    : "tidak_tersedia",
+            "confidence": 0,
+            "respons"   : "FinBot sedang tidak tersedia di server ini. Silakan gunakan aplikasi FinSmart secara langsung."
+        }
     result     = finbot_clf(
         body.pertanyaan,
         candidate_labels=INTENT_LABELS,
