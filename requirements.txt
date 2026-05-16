@@ -1,23 +1,12 @@
-# FinSmart AI Service — Requirements
-# Install: pip install -r requirements.txt
-
-# API Framework
 fastapi==0.115.0
 uvicorn==0.30.6
-
-# Machine Learning
 xgboost==2.1.1
 scikit-learn==1.5.1
 tensorflow==2.17.0
-
-# Data Processing
 numpy==1.26.4
 pandas==2.2.2
-
-# NLP (untuk FinBot di notebook 2)
 transformers==4.44.2
 torch==2.4.1
-
-# Utilities
 joblib==1.4.2
 pydantic==2.8.2
+python-multipart==0.0.9
