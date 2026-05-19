@@ -1,0 +1,31 @@
+{
+  "model_name": "FinSmart_LSTM_SpendingPrediction",
+  "versi": "1.0.0",
+  "task": "Prediksi Total Pengeluaran Bulan Berikutnya",
+  "arsitektur": "LSTM 2 layer + Dense (TensorFlow Functional API)",
+  "sequence_length": 3,
+  "n_features": 12,
+  "features": [
+    "income",
+    "total_spending",
+    "savings",
+    "Food & Dining",
+    "Transportation",
+    "Shopping",
+    "Groceries",
+    "Bills & Utilities",
+    "Entertainment",
+    "Health",
+    "Education",
+    "Others"
+  ],
+  "target": "total_spending",
+  "dataset": "dataset_spending_prediction.csv (200 user x 12 bulan)",
+  "performa": {
+    "MAE": 454249.53,
+    "RMSE": 638529.56,
+    "MAPE": 6.37,
+    "R2": 0.9689
+  },
+  "endpoint_api": "POST /predict-spending"
+}
