@@ -4,10 +4,13 @@ FinSmart AI Service — main_complete_v2.py
 CC26-PSU407 | Muhammad Syaiful | AI Engineer
 
 PERUBAHAN dari v1 ke v2:
-- /classify  : Diupdate sesuai dataset baru DS (7 fitur, encoders baru)
-- /behavior  : BARU — pakai model financial_type_classifier.pkl dari DS
-- /rekomendasi: Diupdate rumus BLR + SR sesuai dokumen resmi DS
-- /finbot    : Tidak berubah
+- /classify        : Diupdate sesuai dataset baru DS (7 fitur, encoders baru)
+- /behavior        : BARU — pakai model financial_type_classifier.pkl dari DS
+- /rekomendasi     : Diupdate rumus BLR + SR sesuai dokumen resmi DS
+- /finbot          : Tidak berubah
+
+PERUBAHAN dari v2 ke v3:
+- /predict-spending: BARU — prediksi pengeluaran bulan depan (LSTM)
 """
 
 import numpy as np
@@ -29,7 +32,7 @@ except ImportError:
 app = FastAPI(
     title="FinSmart AI Service",
     description="API lengkap: klasifikasi pengeluaran, behavior keuangan, FinBot, dan rekomendasi investasi",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -55,6 +58,19 @@ try:
 except Exception as e:
     print(f"Warning: behavior_model gagal diload: {e}")
     behavior_model = None
+
+# Model LSTM Spending Prediction
+try:
+    from tensorflow import keras as _keras
+    lstm_model   = _keras.models.load_model("finsmart_lstm.keras")
+    scaler_lstm  = pickle.load(open("scaler_lstm.pkl", "rb"))
+    LSTM_AVAILABLE = True
+    print("LSTM model berhasil diload")
+except Exception as e:
+    lstm_model   = None
+    scaler_lstm  = None
+    LSTM_AVAILABLE = False
+    print(f"Warning: LSTM model gagal diload: {e}")
 
 # FinBot — Hugging Face
 finbot_clf = None
@@ -116,6 +132,17 @@ MERCHANT_MAP        = {
 CATEGORY_CLASSES = ["Bills", "Clothing", "Electronics", "Entertainment",
                     "Food", "Grocery", "Healthcare", "Online Shopping", "Transport", "Travel"]
 
+
+# ──────────────────────────────────────────────
+# KONSTANTA LSTM
+# ──────────────────────────────────────────────
+LSTM_FEATURES = [
+    "income", "total_spending", "savings",
+    "Food & Dining", "Transportation", "Shopping",
+    "Groceries", "Bills & Utilities", "Entertainment",
+    "Health", "Education", "Others"
+]
+LSTM_SEQUENCE_LENGTH = 3
 # ──────────────────────────────────────────────
 # FINBOT CONSTANTS
 # ──────────────────────────────────────────────
@@ -240,6 +267,41 @@ class BehaviorInput(BaseModel):
     Total_Spending: float   # total pengeluaran (Needs + Wants)
     Financial_Balance: float  # sisa income setelah pengeluaran (Income - Total_Spending)
 
+class PrediksiSpendingInput(BaseModel):
+    """
+    Input endpoint /predict-spending.
+    histori: list of dict, minimal 3 bulan terakhir.
+    Setiap dict berisi: income, total_spending, savings,
+    dan pengeluaran per kategori (Food & Dining, Transportation, dll)
+    """
+    histori: list
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "histori": [
+                    {
+                        "income": 5000000, "total_spending": 3200000, "savings": 1800000,
+                        "Food & Dining": 800000, "Transportation": 400000, "Shopping": 500000,
+                        "Groceries": 300000, "Bills & Utilities": 400000, "Entertainment": 200000,
+                        "Health": 100000, "Education": 200000, "Others": 300000
+                    },
+                    {
+                        "income": 5000000, "total_spending": 3500000, "savings": 1500000,
+                        "Food & Dining": 900000, "Transportation": 450000, "Shopping": 600000,
+                        "Groceries": 350000, "Bills & Utilities": 400000, "Entertainment": 250000,
+                        "Health": 150000, "Education": 200000, "Others": 200000
+                    },
+                    {
+                        "income": 5000000, "total_spending": 3800000, "savings": 1200000,
+                        "Food & Dining": 1000000, "Transportation": 500000, "Shopping": 700000,
+                        "Groceries": 400000, "Bills & Utilities": 400000, "Entertainment": 300000,
+                        "Health": 100000, "Education": 200000, "Others": 200000
+                    }
+                ]
+            }
+        }
+
 class ChatInput(BaseModel):
     pertanyaan: str
 
@@ -318,7 +380,7 @@ def root():
     return {
         "status": "ok",
         "service": "FinSmart AI Service",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "endpoints": [
             "POST /classify    — klasifikasi kategori transaksi",
             "POST /behavior    — klasifikasi perilaku keuangan (Hemat/Normal/Boros)",
@@ -492,6 +554,58 @@ def rekomendasi_investasi(body: RekomendasiInput):
         }.get(status, "")
     }
 
+
+
+@app.post("/predict-spending", tags=["Prediksi"])
+def predict_spending(body: PrediksiSpendingInput):
+    """
+    Prediksi total pengeluaran pengguna bulan berikutnya menggunakan LSTM.
+
+    Input : histori pengeluaran minimal 3 bulan terakhir
+    Output: prediksi total pengeluaran bulan depan + insight
+    """
+    if not LSTM_AVAILABLE or lstm_model is None:
+        raise HTTPException(503, "Model LSTM tidak tersedia saat ini.")
+
+    histori = list(body.histori)
+    if len(histori) < LSTM_SEQUENCE_LENGTH:
+        raise HTTPException(
+            422,
+            f"Histori minimal {LSTM_SEQUENCE_LENGTH} bulan, diterima {len(histori)} bulan."
+        )
+
+    for h in histori:
+        for feat in LSTM_FEATURES:
+            if feat not in h:
+                raise HTTPException(422, f"Field '{feat}' tidak ditemukan di histori.")
+
+    histori = histori[-LSTM_SEQUENCE_LENGTH:]
+    raw     = np.array([[h[f] for f in LSTM_FEATURES] for h in histori])
+    scaled  = scaler_lstm.transform(raw)
+    X       = scaled.reshape(1, LSTM_SEQUENCE_LENGTH, len(LSTM_FEATURES))
+
+    y_scaled = lstm_model.predict(X, verbose=0)[0][0]
+
+    dummy = np.zeros((1, len(LSTM_FEATURES)))
+    target_idx = LSTM_FEATURES.index("total_spending")
+    dummy[0, target_idx] = y_scaled
+    y_actual = scaler_lstm.inverse_transform(dummy)[0, target_idx]
+
+    last_spending = histori[-1]["total_spending"]
+    selisih       = float(y_actual) - float(last_spending)
+    pct_change    = (selisih / float(last_spending)) * 100 if last_spending > 0 else 0
+
+    return {
+        "prediksi_spending_bulan_depan": round(float(y_actual)),
+        "spending_bulan_lalu"          : round(float(last_spending)),
+        "selisih"                      : round(float(selisih)),
+        "perubahan_pct"                : round(float(pct_change), 2),
+        "trend"                        : "naik" if selisih > 0 else "turun",
+        "insight": (
+            f"Prediksi pengeluaran bulan depan Rp {y_actual:,.0f}. "
+            f"{'Naik' if selisih > 0 else 'Turun'} {abs(pct_change):.1f}% dari bulan lalu."
+        )
+    }
 
 @app.post("/finbot/chat", tags=["FinBot"])
 def finbot_chat(body: ChatInput):
