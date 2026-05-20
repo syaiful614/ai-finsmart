@@ -488,16 +488,56 @@ def predict_spending(body: PredictSpendingInput):
     selisih       = y_actual - last_spending
     pct_change    = (selisih / last_spending * 100) if last_spending > 0 else 0
 
+    # Hitung rata-rata 3 bulan dan bulan terakhir per kategori
+    last  = body.histori[-1]
+    prev  = body.histori[-2] if len(body.histori) >= 2 else last
+
+    kategori_map = {
+        "Food & Dining"    : (last.food_dining,    prev.food_dining),
+        "Transportation"   : (last.transportation, prev.transportation),
+        "Shopping"         : (last.shopping,       prev.shopping),
+        "Groceries"        : (last.groceries,      prev.groceries),
+        "Bills & Utilities": (last.bills_utilities, prev.bills_utilities),
+        "Entertainment"    : (last.entertainment,  prev.entertainment),
+        "Health"           : (last.health,         prev.health),
+        "Education"        : (last.education,      prev.education),
+        "Others"           : (last.others,         prev.others),
+    }
+
+    breakdown_kategori = {}
+    insight_kategori   = []
+    for nama, (bulan_ini, bulan_lalu) in kategori_map.items():
+        if bulan_lalu > 0:
+            pct = (bulan_ini - bulan_lalu) / bulan_lalu * 100
+        else:
+            pct = 0.0
+        trend_kat = "naik" if pct > 0 else ("turun" if pct < 0 else "stabil")
+        breakdown_kategori[nama] = {
+            "bulan_lalu"    : round(float(bulan_lalu)),
+            "bulan_ini"     : round(float(bulan_ini)),
+            "perubahan_pct" : round(float(pct), 2),
+            "trend"         : trend_kat,
+        }
+        if abs(pct) >= 5:
+            insight_kategori.append(
+                f"{nama} {trend_kat} {abs(pct):.1f}% dari bulan lalu"
+            )
+
+    insight_text = (
+        f"Prediksi pengeluaran bulan depan Rp {y_actual:,.0f}. "
+        f"{'Naik' if selisih > 0 else 'Turun'} {abs(pct_change):.1f}% dari bulan lalu."
+    )
+    if insight_kategori:
+        insight_text += " Perhatian: " + ", ".join(insight_kategori[:3]) + "."
+
     return {
         "prediksi_spending_bulan_depan": round(float(y_actual)),
         "spending_bulan_lalu"          : round(float(last_spending)),
         "selisih"                      : round(float(selisih)),
         "perubahan_pct"                : round(float(pct_change), 2),
         "trend"                        : "naik" if selisih > 0 else "turun",
-        "insight": (
-            f"Prediksi pengeluaran bulan depan Rp {y_actual:,.0f}. "
-            f"{'Naik' if selisih > 0 else 'Turun'} {abs(pct_change):.1f}% dari bulan lalu."
-        )
+        "breakdown_kategori"           : breakdown_kategori,
+        "insight"                      : insight_text,
     }
 
 
