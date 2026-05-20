@@ -1,6 +1,6 @@
 {
   "nama_proyek": "FinSmart AI Pipeline",
-  "versi": "2.0.0",
+  "versi": "3.0.0",
   "ai_engineer": "Muhammad Syaiful",
   "capstone_id": "CC26-PSU407",
   "komponen": {
@@ -8,20 +8,30 @@
       "deskripsi": "Model klasifikasi kategori pengeluaran otomatis",
       "model": "TensorFlow Functional API + XGBoost (model final)",
       "input": "Amount, Payment_Method, Week_Day, Month, Time_Of_Day, MerchantName, Day",
-      "output": "10 kelas kategori pengeluaran",
+      "output": "9 kelas kategori pengeluaran",
       "custom": "FinSmartCallback",
       "format_model": "finsmart_model.keras + xgb_model.pkl",
       "endpoint_api": "POST /classify"
     },
     "2_behavior_keuangan": {
       "deskripsi": "Klasifikasi perilaku keuangan pengguna",
-      "model": "Decision Tree (financial_type_classifier.pkl) — dari tim Data Scientist",
-      "input": "Income, Needs, Wants, Savings, Total_Spending, Financial_Balance",
+      "model": "Neural Network TensorFlow Functional API (finsmart_behavior_model.keras)",
+      "input": "Income, Needs, Wants, Savings",
       "output": "hemat / normal / boros",
+      "custom": "FinSmartBehaviorCallback",
       "acuan": "Prinsip 50/30/20",
       "endpoint_api": "POST /behavior"
     },
-    "3_finbot_chatbot": {
+    "3_spending_prediction": {
+      "deskripsi": "Prediksi pengeluaran bulanan berdasarkan histori",
+      "model": "LSTM 2 layer TensorFlow Functional API (finsmart_lstm.keras)",
+      "input": "Histori 3 bulan (income, spending, savings, per kategori)",
+      "output": "Prediksi total pengeluaran bulan depan",
+      "custom": "FinSmartLSTMCallback",
+      "metrik": "MAE Rp 454.250 | RMSE Rp 638.530 | MAPE 6.37% | R2 0.9689",
+      "endpoint_api": "POST /predict-spending"
+    },
+    "4_finbot_chatbot": {
       "deskripsi": "Chatbot keuangan berbasis NLP",
       "model": "Hugging Face — facebook/bart-large-mnli",
       "teknik": "Zero-Shot Classification + Intent-Response Mapping",
@@ -30,7 +40,7 @@
       "jumlah_intent": 8,
       "endpoint_api": "POST /finbot/chat"
     },
-    "4_rekomendasi_investasi": {
+    "5_rekomendasi_investasi": {
       "deskripsi": "Analisis kesiapan investasi berdasarkan profil keuangan",
       "metode": "Rule-Based (BLR + SR)",
       "input": "tabungan_total, total_pengeluaran_bulanan, tabungan_bulanan, income_bulanan",
@@ -38,19 +48,20 @@
       "acuan": "Rumus resmi tim Data Scientist CC26-PSU407",
       "endpoint_api": "POST /rekomendasi"
     },
-    "5_api_serving": {
+    "6_api_serving": {
       "deskripsi": "REST API untuk menyajikan semua komponen AI ke front-end",
       "framework": "FastAPI + Uvicorn",
-      "versi": "2.0.0",
+      "versi": "3.0.0",
       "endpoints": [
-        "GET  /              — health check",
-        "POST /classify      — klasifikasi pengeluaran",
-        "POST /behavior      — klasifikasi perilaku keuangan",
-        "POST /finbot/chat   — chatbot FinBot",
-        "POST /rekomendasi   — kesiapan investasi",
-        "GET  /model-info    — info model",
-        "GET  /valid-values  — nilai valid tiap fitur",
-        "GET  /docs          — Swagger UI"
+        "GET  /                  — health check",
+        "POST /classify          — klasifikasi pengeluaran",
+        "POST /behavior          — klasifikasi perilaku keuangan",
+        "POST /predict-spending  — prediksi spending LSTM",
+        "POST /finbot/chat       — chatbot FinBot",
+        "POST /rekomendasi       — kesiapan investasi",
+        "GET  /model-info        — info model",
+        "GET  /valid-values      — nilai valid tiap fitur",
+        "GET  /docs              — Swagger UI"
       ],
       "integrasi": "Dipanggil oleh back-end Node.js via HTTP"
     }
@@ -64,21 +75,27 @@
     "6. Dashboard menampilkan kategori dan insight kepada pengguna"
   ],
   "file_artifacts": [
-    "finsmart_model.keras               — Model TF Functional API",
-    "xgb_model.pkl                      — Model XGBoost final (retrain v2)",
-    "financial_type_classifier.pkl      — Model Decision Tree behavior (dari DS)",
-    "encoders.pkl                       — Label encoders fitur baru (7 fitur)",
-    "scaler.pkl                         — StandardScaler",
+    "finsmart_model.keras               — Model TF Functional API (klasifikasi)",
+    "finsmart_behavior_model.keras       — Model TF Neural Network (behavior)",
+    "finsmart_lstm.keras                — Model LSTM (spending prediction)",
+    "xgb_model.pkl                      — Model XGBoost final",
+    "behavior_label_encoder.pkl         — Label encoder behavior",
+    "behavior_scaler.pkl                — StandardScaler behavior",
+    "scaler_lstm.pkl                    — MinMaxScaler LSTM",
+    "encoders.pkl                       — Label encoders klasifikasi",
+    "scaler.pkl                         — StandardScaler klasifikasi",
     "model_metadata.json                — Metadata dan performa model",
-    "training_log.json                  — Log training per epoch",
+    "training_log.json                  — Log training klasifikasi",
+    "training_log_behavior.json         — Log training behavior NN",
+    "training_log_lstm.json             — Log training LSTM",
     "finbot_chat_history.json           — Log percakapan FinBot",
     "contoh_rekomendasi.json            — Contoh output rekomendasi investasi",
-    "arsitektur_ai.json                 — Dokumentasi arsitektur pipeline",
-    "main_complete_v2.py                — FastAPI server lengkap v2"
+    "arsitektur_ai.json                 — Dokumentasi arsitektur pipeline"
   ],
   "dataset": {
     "klasifikasi_transaksi": "data_TransactionCategorizationuntukmodel.csv (7 fitur, 8000 baris)",
     "behavior_keuangan": "dataset_financial_behavior.csv (6 fitur, 16000 baris)",
+    "spending_prediction": "dataset_spending_prediction.csv (dummy, 200 user x 12 bulan)",
     "sumber": "Tim Data Scientist CC26-PSU407"
   }
 }

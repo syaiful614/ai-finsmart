@@ -12,21 +12,21 @@
     "respons": "Panduan Investasi untuk Pemula:\nSebelum investasi, pastikan sudah:\n- Punya dana darurat (3-6x pengeluaran bulanan)\n- Tidak punya hutang konsumtif\n- Tabungan rutin sudah berjalan\n\nPilihan investasi untuk pemula:\n- Reksa Dana Pasar Uang — risiko rendah, cocok untuk pemula\n- Deposito — aman, bunga pasti\n- Obligasi Negara (ORI/SBR) — dijamin pemerintah\n\nCek fitur Kesiapan Investasi di FinSmart untuk analisis profil keuanganmu."
   },
   {
-    "pertanyaan": "Pengeluaran makanku terlalu besar, gimana cara nguranginnya?",
-    "intent": "cara mengurangi pengeluaran",
-    "confidence": 36.48,
-    "respons": "Tips Mengurangi Pengeluaran:\n1. Identifikasi kategori pengeluaran terbesar dari dashboard FinSmart.\n2. Bedakan kebutuhan (harus) vs keinginan (bisa ditunda).\n3. Kurangi frekuensi makan di luar — masak sendiri bisa hemat 60%.\n4. Manfaatkan promo dan cashback saat belanja online.\n5. Batalkan langganan yang jarang dipakai."
-  },
-  {
-    "pertanyaan": "Apa itu kategori pengeluaran di FinSmart?",
+    "pertanyaan": "Pengeluaran buat makan di luar aku besar banget, gimana nguranginnya?",
     "intent": "kategori pengeluaran",
-    "confidence": 25.36,
-    "respons": "Kategori Pengeluaran di FinSmart:\nFinSmart mengklasifikasikan transaksi ke 10 kategori:\n1. Food | 2. Grocery | 3. Transport | 4. Entertainment | 5. Healthcare\n6. Electronics | 7. Online Shopping | 8. Travel | 9. Clothing | 10. Bills\n\nKategori ditentukan otomatis oleh AI saat kamu input transaksi."
+    "confidence": 22.8,
+    "respons": "Kategori Pengeluaran di FinSmart:\nFinSmart mengklasifikasikan transaksi ke 9 kategori:\n1. Food & Dining | 2. Transportation | 3. Shopping | 4. Groceries\n5. Bills & Utilities | 6. Entertainment | 7. Health | 8. Education | 9. Others\n\nKategori ditentukan otomatis oleh AI saat kamu input transaksi."
   },
   {
-    "pertanyaan": "Bantu aku bikin target tabungan untuk liburan",
+    "pertanyaan": "Aplikasi ini bisa klasifikasi pengeluaran apa aja?",
+    "intent": "kategori pengeluaran",
+    "confidence": 22.72,
+    "respons": "Kategori Pengeluaran di FinSmart:\nFinSmart mengklasifikasikan transaksi ke 9 kategori:\n1. Food & Dining | 2. Transportation | 3. Shopping | 4. Groceries\n5. Bills & Utilities | 6. Entertainment | 7. Health | 8. Education | 9. Others\n\nKategori ditentukan otomatis oleh AI saat kamu input transaksi."
+  },
+  {
+    "pertanyaan": "Aku mau nabung buat liburan tahun depan, target 10 juta",
     "intent": "target tabungan",
-    "confidence": 19.78,
+    "confidence": 17.43,
     "respons": "Cara Menetapkan Target Tabungan:\n1. Tentukan tujuan spesifik: liburan, DP rumah, dana darurat, dll.\n2. Hitung nominal yang dibutuhkan dan tenggat waktunya.\n3. Bagi dengan jumlah bulan untuk mendapatkan target bulanan.\n4. Set target di fitur Sistem Anggaran FinSmart.\n5. FinSmart akan memberi notifikasi jika kamu on-track."
   }
 ]
