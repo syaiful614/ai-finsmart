@@ -1,0 +1,27 @@
+[
+  {
+    "epoch": 1,
+    "loss": 2.2693,
+    "accuracy": 0.1729
+  },
+  {
+    "epoch": 2,
+    "loss": 2.0432,
+    "accuracy": 0.2328
+  },
+  {
+    "epoch": 3,
+    "loss": 1.9658,
+    "accuracy": 0.2624
+  },
+  {
+    "epoch": 4,
+    "loss": 1.9156,
+    "accuracy": 0.2878
+  },
+  {
+    "epoch": 5,
+    "loss": 1.852,
+    "accuracy": 0.2951
+  }
+]
